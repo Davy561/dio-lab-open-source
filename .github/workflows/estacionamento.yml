@@ -1,0 +1,61 @@
+# Workflow Simples para Sistema de Estacionamento
+name: Sistema de Estacionamento
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: Build e Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    
+    - name: Restore
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Test
+      run: dotnet test --no-build --configuration Release --verbosity normal
+    
+    - name: Run Application (Console)
+      run: |
+        echo "🚗 Testando execução do Sistema de Estacionamento..."
+        timeout 10s dotnet run --project ./SistemaEstacionamento --no-build --configuration Release || true
+        echo "✅ Teste de execução concluído!"
+
+  publish:
+    name: Publish
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    
+    - name: Publish
+      run: dotnet publish --configuration Release --output ./publish
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: sistema-estacionamento
+        path: ./publish
